@@ -28,6 +28,10 @@ qq.FileUploader = function(o){
         // size limit in bytes, 0 - no limit
         // this option isn't supported in all browsers
         sizeLimit: 0,
+        
+        //File name var name
+        fileNameParam: 'qqfile',
+        
         onSubmit: function(id, fileName){},
         onComplete: function(id, fileName, responseJSON){},
 
@@ -598,7 +602,7 @@ qq.UploadHandlerForm.prototype = {
      * Returns id to use with upload, cancel
      **/    
     add: function(fileInput){
-        fileInput.setAttribute('name', 'qqfile');
+        fileInput.setAttribute('name', this._options.fileNameParam);
         var id = 'qq-upload-handler-iframe' + qq.getUniqueId();       
         
         this._inputs[id] = fileInput;
@@ -732,7 +736,12 @@ qq.UploadHandlerForm.prototype = {
         // Because in this case file won't be attached to request
         var form = qq.toElement('<form method="post" enctype="multipart/form-data"></form>');
 
-        var queryString = '?' + qq.obj2url(params);
+        if (this._options.action.indexOf('?')==-1)
+        	var sep = '?';
+        else 
+        	var sep = '&';
+        
+        var queryString = sep + qq.obj2url(params);
 
         form.setAttribute('action', this._options.action + queryString);
         form.setAttribute('target', iframe.name);
@@ -832,7 +841,13 @@ qq.UploadHandlerXhr.prototype = {
         };
 
         // build query string
-        var queryString = '?qqfile=' + encodeURIComponent(name) + '&' + qq.obj2url(params);
+        if (this._options.action.indexOf('?')==-1)
+        	var sep = '?';
+        else 
+        	var sep = '&';
+        
+        var queryString = sep+this._options.fileNameParam+'=' + encodeURIComponent(name) + '&' + qq.obj2url(params);
+        	
 
         xhr.open("POST", this._options.action + queryString, true);
         xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");

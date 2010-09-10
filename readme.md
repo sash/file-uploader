@@ -7,30 +7,42 @@ providing good user experience everywhere.
 ### <a href="http://valums.com/files/2010/file-uploader/demo.htm">Demo</a> [Donate][donation_link] ###
 
 ### Features ###
-* multiple file select in FF, Chrome, Safari
-* progress-bar in FF, Chrome6+, Safari
+* multiple file select, progress-bar in FF, Chrome, Safari
 * drag-and-drop file select in FF, Chrome 
-* stylable via CSS
 * uploads are cancellable
 * no external dependencies
 * doesn't use Flash
 * fully working with https
 * keyboard support in FF, Chrome, Safari
-* tested in IE7,8; Firefox 3,3.5,3.6; Safari4,5; Chrome5,6; Opera10.60;
+* tested in IE7,8; Firefox 3,3.6,4; Safari4,5; Chrome; Opera10.60;
 
 ### License ###
 This plugin is open sourced under <a href="http://www.gnu.org/licenses/gpl-2.0.html">GNU GPL 2</a> or later.
-If this license doesn't suit you contact andrew (at) valums.com for another options.
+If this license doesn't suit you mail me at andrew (at) valums.com.
 
 Please [donate][donation_link] if you are willing to support the further development of file upload plugin.  
 
 ### Known Issues ###
 Plugin breaks back button functionality in Opera.
 	
-### Setting up ###
+### Getting started ###
+The fileuploader.js contains two classes that are meant to be used directly.
+If you need a complete upload widget (from demo) to quickly drop
+into your current design, use qq.FileUploader.
+
+If you want to customize uploader, by using a different looking file list
+or change the behaviour or functionality use qq.FileUploaderBasic.
+
+The difference between them is that qq.FileUploader provides a list of files,
+drag-and-drop, but qq.FileUploaderBasic only creates button and handles validation.
+Basic uploader is easier extendable, and doesn't limit possible customization.
+
+qq.FileUploader extends qq.FileUploaderBasic, so that all the options present
+in the basic uploader also exist in the full widget.  
+
+### qq.FileUploader - Setting up full upload widget ###
 
 Include fileuploader.js and fileuploader.css into your page.
-
 Create container element.
 
     <div id="file-uploader">       
@@ -40,70 +52,54 @@ Create container element.
         </noscript>         
     </div>
     
-Initialize uploader when the DOM is ready.
+Initialize uploader when the DOM is ready. Change the action option.
+For example ../server/php.php for the default folder structure.
+In the server folder you will find examples for different platforms.
+If you can't find the one you need, check the readme.txt in the same folder. 
 
     var uploader = new qq.FileUploader({
         // pass the dom node (ex. $(selector)[0] for jQuery users)
         element: document.getElementById('file-uploader'),
         // path to server-side upload script
         action: '/server/upload'
-    });
+    }); 
 
-Don't forget to setup the server side script, some examples can be found in the "server" folder.
-If you can't find an example for your server platform, send me a mail to andrew (at) valums.com.
-I will be glad to help.
-
-### Configuring ###
-
-Below is the list of important options, more details are given below. 
-
-    // container element DOM node (ex. $(selector)[0] for jQuery users)
-    element: null,
+### Options of both classes ###
+    
     // url of the server-side upload script, should be on the same domain
     action: '/server/upload',
     // additional data to send, name-value pairs
     params: {},
+    
+    // validation    
     // ex. ['jpg', 'jpeg', 'png', 'gif'] or []
     allowedExtensions: [],        
-    // size limit in bytes, 0 - no limit
+    // each file size limit in bytes
     // this option isn't supported in all browsers
-    sizeLimit: 0,
+    sizeLimit: 0, // max size   
+    minSizeLimit: 0, // min size
+    
+    // events    
+     
+    // you can return false to abort submit
     onSubmit: function(id, fileName){},
+    onProgress: function(id, fileName, loaded, total){},
     onComplete: function(id, fileName, responseJSON){},
+    onCancel: function(id, fileName){},
+    
     messages: {
-        // error messages, see fileuploader.js for details            
+        // error messages, see qq.FileUploaderBasic for content            
     },
-    showMessage: function(message){
-        alert(message);
-    }        
+    showMessage: function(message){ alert(message); }        
 
 Instance methods
 
-* setParams(newParams)        
-* isUploading() Returns true if some files are being uploaded, false otherwise 
-
-#### Limiting file type and size ####
-
-Pass them as the options to constructor, the uploader will show a message if the 
-user selects a file that doesn't match the criteria. The sizeLimit option only works
-in most modern browsers at the moment. And you must add the same checks in your server-side
-script.
-
-    var uploader = new qq.FileUploader({
-        element: document.getElementById('file-uploader'),
-        action: '/server-side.upload',
-        // ex. ['jpg', 'jpeg', 'png', 'gif'] or []
-        allowedExtensions: [],        
-        // size limit in bytes, 0 - no limit
-        // this option isn't supported in all browsers
-        sizeLimit: 0        
-    });
+* setParams(newParams)         
 
 #### Changing alert/messages to something more user friendly ####
 
 If you limited file types and max size, you will probably want to change the default alert and
 messages as you see fit, this is possible using showMessage callback and messages option.
-Localization also meant to be done using this option. Look into qq.FileUploader for default values.
 
 #### Sending additional params ####
 
@@ -125,25 +121,28 @@ To change params based on the state of your app, use
        anotherParam: 'value' 
     });
 
-It can be nicely used in onSubmit callback.
+It can be nicely used in onSubmit callback.      
 
-#### Callbacks ####
+#### Troubleshooting ####
+If you can't get the uploader to work, try the following steps before asking for help.
 
-You can use the onSubmit callback, to set parameters based on the state of your app.     
-    
-    onSubmit: function(id, fileName){},
-    onComplete: function(id, fileName, responseJSON){}
+Install Chrome or Safari to get their excellent developer tools,
+or alternatively use Firebug. Open resources tab in developer tools.
 
-#### Changing design ####
+Try to upload a file, you will either see an error in the console, or
+a new item will be added to the resource list which should point to your upload
+script.
 
-If you want to change markup, look into template, fileTemplate, classes option in fileuploader.js
-But for most purposes customization of the css file should be enough.
-    
-#### Further questions ####
-
-If you have a short question, leave comment on my blog. For commercial support, contact andrew (at) valums.com    
+Select a content tab, and there you will see a server response. It
+should be {success:true} for completed requests. If it's not, you will
+probably see a reason there.
 
 #### Contributors ####
 
-Thanks to everybody who cotributed, either by sending bug reports or donating. 
-And also thanks to Andy Newby for his perl code, Ivan Valles, SeanJA, Patrick Pfeiffer, and others.
+Thanks to everybody who contributed, either by sending bug reports or donating. And special thanks to:
+
+Sidney Maestre  
+Patrick Pfeiffer  
+Sean Sandy (SeanJA)  
+Andy Newby     
+Ivan Valles   

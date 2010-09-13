@@ -305,7 +305,8 @@ qq.FileUploaderBasic.prototype = {
             multiple: this._options.multiple && qq.UploadHandlerXhr.isSupported(),
             onChange: function(input){
                 self._onInputChange(input);
-            }        
+            },
+            hoverClass: 'ui-state-hover'
         });           
     },    
     _createUploadHandler: function(){

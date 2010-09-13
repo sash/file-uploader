@@ -568,6 +568,7 @@ qq.extend(qq.FileUploader.prototype, {
             },
             onDrop: function(e){
                 dropArea.style.display = 'none';
+                self._element.className = self._element.className.replace(' dragging', '')
                 qq.removeClass(dropArea, self._classes.dropActive);
                 self._uploadFileList(e.dataTransfer.files);    
             }
@@ -577,7 +578,8 @@ qq.extend(qq.FileUploader.prototype, {
 
         qq.attach(document, 'dragenter', function(e){     
             if (!dz._isValidFileDrag(e)) return; 
-            
+            self._element.className = self._element.className.replace(' dragging', '')
+            self._element.className = self._element.className + ' dragging'
             dropArea.style.display = 'block';            
         });                 
         qq.attach(document, 'dragleave', function(e){
@@ -586,7 +588,8 @@ qq.extend(qq.FileUploader.prototype, {
             var relatedTarget = document.elementFromPoint(e.clientX, e.clientY);
             // only fire when leaving document out
             if ( ! relatedTarget || relatedTarget.nodeName == "HTML"){               
-                dropArea.style.display = 'none';                                            
+                dropArea.style.display = 'none'; 
+                self._element.className = self._element.className.replace(' dragging', '')
             }
         });                
     },

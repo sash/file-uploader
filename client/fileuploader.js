@@ -955,7 +955,7 @@ qq.extend(qq.UploadHandlerForm.prototype, qq.UploadHandlerAbstract.prototype);
 
 qq.extend(qq.UploadHandlerForm.prototype, {
     add: function(fileInput){
-        fileInput.setAttribute('name', this._options.fileNameParam);
+        fileInput.setAttribute('name', 'qqfile');
         var id = 'qq-upload-handler-iframe' + qq.getUniqueId();       
         
         this._inputs[id] = fileInput;

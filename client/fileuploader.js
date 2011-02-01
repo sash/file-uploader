@@ -267,6 +267,7 @@ qq.FileUploaderBasic = function(o){
         onProgress: function(id, fileName, loaded, total){},
         onComplete: function(id, fileName, responseJSON){},
         onCancel: function(id, fileName){},
+        onListSubmit: function(list){},
         // messages                
         messages: {
             typeError: "{file} has invalid extension. Only {extensions} are allowed.",
@@ -385,6 +386,11 @@ qq.FileUploaderBasic.prototype = {
             }            
         }
         
+        var size = 0;
+        for(var i=0; i<files.length; i++){
+        	if (files[i] instanceof File) size+=files[i].fileSize != null ? files[i].fileSize : files[i].size
+        }
+        this._options.onListSubmit(files.length, size)
         for (var i=0; i<files.length; i++){
             this._uploadFile(files[i]);        
         }        

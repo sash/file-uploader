@@ -250,6 +250,8 @@ var qq = qq || {};
  */
 qq.FileUploaderBasic = function(o){
     this._options = {
+        // set to true to see the server response
+        debug: false,
         action: '/server/upload',
         params: {},
         button: null,
@@ -320,6 +322,7 @@ qq.FileUploaderBasic.prototype = {
         }
 
         var handler = new qq[handlerClass]({
+            debug: this._options.debug,
             action: this._options.action,         
             maxConnections: this._options.maxConnections,   
             onProgress: function(id, fileName, loaded, total){                
@@ -479,6 +482,9 @@ qq.FileUploader = function(o){
     // additional options    
     qq.extend(this._options, {
         element: null,
+        // if set, will be used instead of qq-upload-list in template
+        listElement: null,
+        
         template: '<div class="qq-uploader">' + 
                 '<div class="qq-upload-drop-area"><span>Drop files here to upload</span></div>' +
                 '<div class="qq-upload-button">Upload a file</div>' +
@@ -492,8 +498,8 @@ qq.FileUploader = function(o){
                 '<span class="qq-upload-size"></span>' +
                 '<a class="qq-upload-cancel" href="#">Cancel</a>' +
                 '<span class="qq-upload-failed-text">Failed</span>' +
-            '</li>',
-
+            '</li>',        
+        
         classes: {
             // used to get elements from templates
             button: 'qq-upload-button',
@@ -516,10 +522,12 @@ qq.FileUploader = function(o){
     qq.extend(this._options, o);       
 
     this._element = this._options.element;
-    this._element.innerHTML = this._options.template;    
-    this._classes = this._options.classes;
+    this._element.innerHTML = this._options.template;        
+    this._listElement = this._options.listElement || this._find(this._element, 'list');
     
-    this._button = this._createUploadButton(this._getElement('button'));        
+    this._classes = this._options.classes;
+        
+    this._button = this._createUploadButton(this._find(this._element, 'button'));        
     
     this._bindCancelEvent();
     this._setupDragDrop();
@@ -531,19 +539,9 @@ qq.extend(qq.FileUploader.prototype, qq.FileUploaderBasic.prototype);
 qq.extend(qq.FileUploader.prototype, {
     /**
      * Gets one of the elements listed in this._options.classes
-     * First optional element is root for search (this._element default)
-     *  1. this._getElement('button');
-     *  2. this._getElement(item, 'file'); 
      **/
-    _getElement: function(parent, type){                        
-        if (typeof parent == 'string'){
-            // parent was not passed
-            type = parent;
-            parent = this._element;                   
-        }
-        
-        var element = qq.getByClass(parent, this._options.classes[type])[0];
-        
+    _find: function(parent, type){                                
+        var element = qq.getByClass(parent, this._options.classes[type])[0];        
         if (!element){
             throw new Error('element not found ' + type);
         }
@@ -552,7 +550,7 @@ qq.extend(qq.FileUploader.prototype, {
     },
     _setupDragDrop: function(){
         var self = this,
-            dropArea = this._getElement('drop');                        
+            dropArea = this._find(this._element, 'drop');                        
 
         var dz = new qq.UploadDropZone({
             element: dropArea,
@@ -601,7 +599,7 @@ qq.extend(qq.FileUploader.prototype, {
         qq.FileUploaderBasic.prototype._onProgress.apply(this, arguments);
 
         var item = this._getItemByFileId(id);
-        var size = this._getElement(item, 'size');
+        var size = this._find(item, 'size');
         size.style.display = 'inline';
         
         var text; 
@@ -618,8 +616,8 @@ qq.extend(qq.FileUploader.prototype, {
 
         // mark completed
         var item = this._getItemByFileId(id);                
-        qq.remove(this._getElement(item, 'cancel'));
-        qq.remove(this._getElement(item, 'spinner'));
+        qq.remove(this._find(item, 'cancel'));
+        qq.remove(this._find(item, 'spinner'));
         
         if (result.success){
             qq.addClass(item, this._classes.success);    
@@ -631,14 +629,14 @@ qq.extend(qq.FileUploader.prototype, {
         var item = qq.toElement(this._options.fileTemplate);                
         item.qqFileId = id;
 
-        var fileElement = this._getElement(item, 'file');        
+        var fileElement = this._find(item, 'file');        
         qq.setText(fileElement, this._formatFileName(fileName));
-        this._getElement(item, 'size').style.display = 'none';        
+        this._find(item, 'size').style.display = 'none';        
 
-        this._getElement('list').appendChild(item);
+        this._listElement.appendChild(item);
     },
     _getItemByFileId: function(id){
-        var item = this._getElement('list').firstChild;        
+        var item = this._listElement.firstChild;        
         
         // there can't be txt nodes in dynamically created list
         // and we can  use nextSibling
@@ -652,7 +650,7 @@ qq.extend(qq.FileUploader.prototype, {
      **/
     _bindCancelEvent: function(){
         var self = this,
-            list = this._getElement('list');            
+            list = this._listElement;            
         
         qq.attach(list, 'click', function(e){            
             e = e || window.event;
@@ -860,6 +858,7 @@ qq.UploadButton.prototype = {
  */
 qq.UploadHandlerAbstract = function(o){
     this._options = {
+        debug: false,
         action: '/upload.php',
         // maximum number of concurrent uploads        
         maxConnections: 999,
@@ -874,6 +873,9 @@ qq.UploadHandlerAbstract = function(o){
     this._params = [];
 };
 qq.UploadHandlerAbstract.prototype = {
+    log: function(str){
+        if (this._options.debug && window.console) console.log('[uploader] ' + str);        
+    },
     /**
      * Adds file or file input to the queue
      * @returns id
@@ -1008,8 +1010,12 @@ qq.extend(qq.UploadHandlerForm.prototype, {
         form.appendChild(input);
 
         var self = this;
-        this._attachLoadEvent(iframe, function(){                        
-            self._options.onComplete(id, fileName, self._getIframeContentJSON(iframe));
+        this._attachLoadEvent(iframe, function(){                                 
+            self.log('iframe loaded');
+            
+            var response = self._getIframeContentJSON(iframe);
+
+            self._options.onComplete(id, fileName, response);
             self._dequeue(id);
             
             delete self._inputs[id];
@@ -1054,12 +1060,15 @@ qq.extend(qq.UploadHandlerForm.prototype, {
         // iframe.contentWindow.document - for IE<7
         var doc = iframe.contentDocument ? iframe.contentDocument: iframe.contentWindow.document,
             response;
-
+        
+        this.log("converting iframe's innerHTML to JSON");
+        this.log("innerHTML = " + doc.body.innerHTML);
+                        
         try {
             response = eval("(" + doc.body.innerHTML + ")");
         } catch(err){
             response = {};
-        }
+        }        
 
         return response;
     },
@@ -1208,6 +1217,9 @@ qq.extend(qq.UploadHandlerXhr.prototype, {
         this._options.onProgress(id, name, size, size);
                 
         if (xhr.status == 200){
+            this.log("xhr - server response received");
+            this.log("responseText = " + xhr.responseText);
+                        
             var response;
                     
             try {
